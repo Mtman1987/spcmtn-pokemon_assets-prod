@@ -7,22 +7,22 @@
     body {
       margin: 0;
       background: #111;
+      overflow: hidden;
     }
 
     .card-container {
-      width: 800px;
-      height: 500px;
-      margin: 0 auto;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       position: relative;
-      overflow: hidden;
     }
 
     .card {
       width: 150px;
       height: 220px;
       position: absolute;
-      top: 140px;
-      left: 100px;
       perspective: 1000px;
       transform-origin: bottom center;
       transition: all 0.8s ease-in-out;
@@ -45,6 +45,8 @@
       position: absolute;
       backface-visibility: hidden;
       object-fit: cover;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(255,255,255,0.2);
     }
 
     .front {
@@ -52,12 +54,35 @@
     }
 
     .back {
-      background: url("background.jpg") center/cover no-repeat;
+      background: url("https://mtman1987.github.io/spcmtn-pokemon_assets-prod/overlays/background.jpg") center/cover no-repeat;
+    }
+
+    .rare-glow {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 310px;
+      height: 450px;
+      pointer-events: none;
+      border-radius: 8px;
+      background: radial-gradient(circle at center, rgba(255,255,255,0.7) 0%, transparent 80%);
+      box-shadow: 0 0 60px 30px rgba(255,215,0,0.4);
+      animation: pulse 2s infinite ease-in-out;
+      z-index: 999;
+      opacity: 0;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.7; }
+      50% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.7; }
     }
   </style>
 </head>
 <body>
-  <div class="card-container" id="cardContainer"></div>
+  <div class="card-container" id="cardContainer">
+    <div class="rare-glow" id="rareGlow"></div>
+  </div>
 
   <script>
     async function init() {
@@ -77,20 +102,19 @@
 
     function buildFan(cards) {
       const container = document.getElementById("cardContainer");
-      container.innerHTML = "";
+      container.innerHTML = '<div class="rare-glow" id="rareGlow"></div>';
 
       cards.forEach((name, i) => {
         const card = document.createElement("div");
         card.className = "card";
 
-        // Spread fan left to right, rare (last) is at bottom
         const fanCount = cards.length;
         const angle = (i - (fanCount - 1) / 2) * 10;
         const left = 80 + i * 20;
 
         card.style.transform = `rotate(${angle}deg)`;
         card.style.left = `${left}px`;
-        card.style.zIndex = 10 - i; // rare is bottom-most
+        card.style.zIndex = 10 - i;
 
         card.innerHTML = `
           <div class="inner">
@@ -104,9 +128,8 @@
     function slideGrid(cards) {
       const all = document.querySelectorAll(".card");
 
-      // Top 6 cards slide out from top of the fan
       for (let i = 0; i < 6; i++) {
-        const card = all[i]; // topmost first
+        const card = all[i];
         setTimeout(() => {
           const row = i < 3 ? 0 : 230;
           const col = 800 - 150 - (i % 3) * 160;
@@ -116,7 +139,6 @@
         }, i * 500);
       }
 
-      // Rare card grows upright in place (last one)
       const rare = all[6];
       if (rare) {
         setTimeout(() => {
@@ -132,13 +154,19 @@
 
     function flipCards() {
       const cards = document.querySelectorAll(".card");
+      const flipSound = new Audio("https://mtman1987.github.io/spcmtn-pokemon_assets-prod/overlays/card_flip.mp3");
+      const endSound = new Audio("https://mtman1987.github.io/spcmtn-pokemon_assets-prod/overlays/end.mp3");
+      const rareGlow = document.getElementById("rareGlow");
+
       cards.forEach((card, i) => {
         setTimeout(() => {
           card.classList.add("flipped");
-          try { new Audio("Card Flip.mp3").play(); } catch {}
+          try { flipSound.play(); } catch {}
+
           if (i === cards.length - 1) {
             setTimeout(() => {
-              try { new Audio("Finished.mp3").play(); } catch {}
+              try { endSound.play(); } catch {}
+              rareGlow.style.opacity = 1;
             }, 1000);
           }
         }, i * 3000);

@@ -74,10 +74,8 @@
       const fadeTime = 4000;
 
       function showNextBatch() {
-        // Clear old real cards
         container.querySelectorAll(".card.real").forEach(card => card.remove());
 
-        // Drop junk cards
         junk.forEach(raw => {
           const url = encodeURI(raw.trim());
           const bad = document.createElement("div");
@@ -108,7 +106,6 @@
               scale(1)`;
           }, 20);
 
-          // Fade out after linger period
           setTimeout(() => {
             bad.style.transition += `, opacity ${fadeTime}ms ease-out`;
             bad.style.opacity = "0";
@@ -116,7 +113,6 @@
           }, junkLinger);
         });
 
-        // Drop real cards
         const batch = cards.slice(index, index + 7);
         batch.forEach((raw, i) => {
           const url = encodeURI(raw.trim());
@@ -130,10 +126,10 @@
           let fx, fy;
           if (i < 3) {
             fx = 270 + i * 160;
-            fy = 190; // ⬅ Top row centered
+            fy = 190;
           } else {
             fx = 200 + (i - 3) * 160;
-            fy = 360; // ⬅ Bottom row centered
+            fy = 360;
           }
 
           card.style.transform = `

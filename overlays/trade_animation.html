@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pokémon Trade Overlay</title>
+  <style>
+    /* existing CSS unchanged */
+
+    .sparkle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(255,255,255,0.8);
+      animation: sparkleAnim 1.5s ease-out forwards;
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    @keyframes sparkleAnim {
+      0% { transform: scale(0.5); opacity: 1; }
+      50% { transform: scale(1.5); opacity: 0.9; }
+      100% { transform: scale(0.5) translateY(-20px); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Trainers -->
+  <div class="trainer-box" id="trainerA-box">
+    <img src="trainer1.png" class="trainer-img" />
+    <div class="username" id="nameA">Trainer A</div>
+  </div>
+
+  <div class="trainer-box" id="trainerB-box">
+    <img src="trainer2.png" class="trainer-img" />
+    <div class="username" id="nameB">Trainer B</div>
+  </div>
+
+  <!-- Cards -->
+  <div class="card-wrapper cardA-wrapper" id="wrapperA">
+    <div class="card-inner" id="innerA">
+      <img class="card-front" id="cardA-front" />
+      <img class="card-back" src="background.jpg" />
+    </div>
+  </div>
+
+  <div class="card-wrapper cardB-wrapper" id="wrapperB">
+    <div class="card-inner" id="innerB">
+      <img class="card-front" id="cardB-front" />
+      <img class="card-back" src="background.jpg" />
+    </div>
+  </div>
+
+  <!-- Flash, Banner -->
+  <div id="flash" class="flash"></div>
+  <div id="banner" class="banner">TRADE COMPLETE!</div>
+
+  <script>
+    const endSound = new Audio("https://mtman1987.github.io/spcmtn-pokemon_assets-prod/overlays/end.mp3");
+
+    function triggerSparkles() {
+      const container = document.body;
+      for (let i = 0; i < 20; i++) {
+        const s = document.createElement("div");
+        s.className = "sparkle";
+        s.style.left = `${Math.random() * 100}vw`;
+        s.style.top = `${Math.random() * 100}vh`;
+        s.style.animationDelay = `${Math.random()}s`;
+        container.appendChild(s);
+        setTimeout(() => s.remove(), 1500);
+      }
+    }
+
+    window.onload = () => {
+      fetch("trade.txt")
+        .then(res => res.text())
+        .then(txt => {
+          const [userA, userB, cardAFile, cardBFile] = txt.trim().split("\n");
+
+          document.getElementById("nameA").textContent = userA;
+          document.getElementById("nameB").textContent = userB;
+          document.getElementById("cardA-front").src = cardAFile.trim();
+          document.getElementById("cardB-front").src = cardBFile.trim();
+
+          setTimeout(() => {
+            document.getElementById("wrapperA").classList.add("slide-center-A");
+            document.getElementById("wrapperB").classList.add("slide-center-B");
+          }, 1500);
+
+          setTimeout(() => {
+            document.getElementById("innerA").classList.add("flipped");
+            document.getElementById("innerB").classList.add("flipped");
+          }, 4000);
+
+          setTimeout(() => {
+            document.getElementById("flash").classList.add("flash-active");
+            triggerSparkles();
+          }, 5500);
+
+          setTimeout(() => {
+            document.getElementById("wrapperA").classList.remove("slide-center-A");
+            document.getElementById("wrapperA").classList.add("slide-back-A");
+            document.getElementById("wrapperB").classList.remove("slide-center-B");
+            document.getElementById("wrapperB").classList.add("slide-back-B");
+          }, 6000);
+
+          setTimeout(() => {
+            document.getElementById("banner").classList.add("show");
+          }, 7000);
+
+          setTimeout(() => {
+            document.getElementById("wrapperA").classList.add("grow");
+            document.getElementById("wrapperB").classList.add("grow");
+            document.getElementById("banner").classList.add("grow");
+          }, 9000);
+
+          setTimeout(() => {
+            document.body.classList.add("fadeout");
+            try { endSound.play(); } catch {}
+          }, 11500);
+        });
+    };
+  </script>
+</body>
+</html>
