@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pack Flip Animation</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+    }
+
+    .card-container {
+      width: 800px;
+      height: 500px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card {
+      width: 150px;
+      height: 220px;
+      position: absolute;
+      top: 140px;
+      left: 100px;
+      perspective: 1000px;
+      transform-origin: bottom center;
+      transition: all 0.8s ease-in-out;
+    }
+
+    .inner {
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.6s;
+    }
+
+    .card.flipped .inner {
+      transform: rotateY(180deg);
+    }
+
+    .front, .back {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      backface-visibility: hidden;
+      object-fit: cover;
+    }
+
+    .front {
+      transform: rotateY(180deg);
+    }
+
+    .back {
+      background: url("background.jpg") center/cover no-repeat;
+    }
+  </style>
+</head>
+<body>
+  <div class="card-container" id="cardContainer"></div>
+
+  <script>
+    async function init() {
+      try {
+        const res = await fetch("random_cards.txt?ts=" + Date.now());
+        if (!res.ok) throw new Error("Pack file not found.");
+        const text = await res.text();
+        const filenames = text.trim().split("\n").filter(Boolean);
+        if (filenames.length < 7) throw new Error("Not enough cards!");
+        buildFan(filenames);
+        setTimeout(() => slideGrid(filenames), 1000);
+        setTimeout(() => flipCards(), 5000);
+      } catch (err) {
+        console.error("Error loading cards:", err);
+      }
+    }
+
+    function buildFan(cards) {
+      const container = document.getElementById("cardContainer");
+      container.innerHTML = "";
+
+      cards.forEach((name, i) => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        // Spread fan left to right, rare (last) is at bottom
+        const fanCount = cards.length;
+        const angle = (i - (fanCount - 1) / 2) * 10;
+        const left = 80 + i * 20;
+
+        card.style.transform = `rotate(${angle}deg)`;
+        card.style.left = `${left}px`;
+        card.style.zIndex = 10 - i; // rare is bottom-most
+
+        card.innerHTML = `
+          <div class="inner">
+            <div class="back"></div>
+            <img class="front" src="${name.trim()}" alt="Card">
+          </div>`;
+        container.appendChild(card);
+      });
+    }
+
+    function slideGrid(cards) {
+      const all = document.querySelectorAll(".card");
+
+      // Top 6 cards slide out from top of the fan
+      for (let i = 0; i < 6; i++) {
+        const card = all[i]; // topmost first
+        setTimeout(() => {
+          const row = i < 3 ? 0 : 230;
+          const col = 800 - 150 - (i % 3) * 160;
+          card.style.top = `${row}px`;
+          card.style.left = `${col}px`;
+          card.style.transform = "rotate(0deg)";
+        }, i * 500);
+      }
+
+      // Rare card grows upright in place (last one)
+      const rare = all[6];
+      if (rare) {
+        setTimeout(() => {
+          rare.style.transform = "rotate(0deg)";
+          rare.style.left = "10px";
+          rare.style.top = "0px";
+          rare.style.width = "310px";
+          rare.style.height = "450px";
+          rare.style.transition = "all 9s ease";
+        }, 4000);
+      }
+    }
+
+    function flipCards() {
+      const cards = document.querySelectorAll(".card");
+      cards.forEach((card, i) => {
+        setTimeout(() => {
+          card.classList.add("flipped");
+          try { new Audio("Card Flip.mp3").play(); } catch {}
+          if (i === cards.length - 1) {
+            setTimeout(() => {
+              try { new Audio("Finished.mp3").play(); } catch {}
+            }, 1000);
+          }
+        }, i * 3000);
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

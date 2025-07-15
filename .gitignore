@@ -1,0 +1,38 @@
+# System junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node modules (if using npm)
+node_modules/
+
+# Firebase & Eden secrets
+.env
+.env.local
+serviceAccountKey.json
+eden.config.json
+eden.token
+eden_auth.json
+
+# Eden build/cache/output folders (optional, depending on setup)
+eden_build/
+eden_cache/
+eden_temp/
+
+# Log or temp files
+*.log
+*.tmp
+
+# VS Code or IDE configs
+.vscode/
+.idea/
+
+# Git metadata backup
+*.orig
+*.swp
+*.swo
+
+# Optional build or archive files
+dist/
+*.zip
+*.tar.gz

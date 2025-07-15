@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Collection Viewer – Centered Real Cards</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+    }
+    .card-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      perspective: 1200px;
+    }
+    .card {
+      position: absolute;
+      width: 140px;
+      height: 200px;
+      transform-origin: center bottom;
+      z-index: 1;
+      opacity: 1;
+    }
+    .card.real {
+      z-index: 2;
+    }
+    .inner {
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.6s ease-in-out;
+    }
+    .card.flipped .inner {
+      transform: rotateY(180deg);
+    }
+    .front, .back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      background-size: cover;
+      background-position: center;
+    }
+    .back { background-image: url("background.jpg"); }
+    .front { transform: rotateY(180deg); }
+  </style>
+</head>
+<body>
+  <div class="card-container" id="cardContainer"></div>
+  <script>
+    const container = document.getElementById("cardContainer");
+
+    async function loadAll() {
+      const [aRes, jRes] = await Promise.all([
+        fetch("active.txt?ts=" + Date.now()),
+        fetch("junk.txt?ts=" + Date.now())
+      ]);
+      const cards = aRes.ok ? (await aRes.text()).trim().split("\n").filter(Boolean) : [];
+      const junk  = jRes.ok ? (await jRes.text()).trim().split("\n").filter(Boolean) : [];
+      runSlideshow(cards, junk);
+    }
+
+    function runSlideshow(cards, junk) {
+      let index = 0;
+      const fallDur = 1200;
+      const batchInt = 14000;
+      const junkLinger = 30000;
+      const fadeTime = 4000;
+
+      function showNextBatch() {
+        // Clear old real cards
+        container.querySelectorAll(".card.real").forEach(card => card.remove());
+
+        // Drop junk cards
+        junk.forEach(raw => {
+          const url = encodeURI(raw.trim());
+          const bad = document.createElement("div");
+          bad.className = "card";
+          bad.innerHTML = `
+            <div class="inner"><div class="back"></div>
+            <img class="front" src="${url}" alt="Junk"></div>`;
+          container.appendChild(bad);
+
+          const fx = Math.random() * (container.clientWidth - 140);
+          const fy = Math.random() * (container.clientHeight - 200);
+          const angle = Math.random() * 360 - 180;
+
+          bad.style.transform = `
+            translateX(${fx}px)
+            translateY(-500px)
+            translateZ(600px)
+            rotateZ(${angle}deg)
+            scale(2.5)`;
+          bad.style.transition = `transform ${fallDur}ms ease-out`;
+
+          setTimeout(() => {
+            bad.style.transform = `
+              translateX(${fx}px)
+              translateY(${fy}px)
+              translateZ(0)
+              rotateZ(${angle}deg)
+              scale(1)`;
+          }, 20);
+
+          // Fade out after linger period
+          setTimeout(() => {
+            bad.style.transition += `, opacity ${fadeTime}ms ease-out`;
+            bad.style.opacity = "0";
+            setTimeout(() => bad.remove(), fadeTime);
+          }, junkLinger);
+        });
+
+        // Drop real cards
+        const batch = cards.slice(index, index + 7);
+        batch.forEach((raw, i) => {
+          const url = encodeURI(raw.trim());
+          const card = document.createElement("div");
+          card.className = "card real";
+          card.innerHTML = `
+            <div class="inner"><div class="back"></div>
+            <img class="front" src="${url}" alt="Card"></div>`;
+          container.appendChild(card);
+
+          let fx, fy;
+          if (i < 3) {
+            fx = 270 + i * 160;
+            fy = 190; // ⬅ Top row centered
+          } else {
+            fx = 200 + (i - 3) * 160;
+            fy = 360; // ⬅ Bottom row centered
+          }
+
+          card.style.transform = `
+            translateX(${fx}px)
+            translateY(-500px)
+            translateZ(600px)
+            scale(2.5)`;
+          card.style.transition = `transform ${fallDur}ms ease-out`;
+
+          setTimeout(() => {
+            card.style.transform = `
+              translateX(${fx}px)
+              translateY(${fy}px)
+              translateZ(0)
+              scale(1)`;
+          }, 20);
+
+          const flipAt = Math.random() * (fallDur - 200) + 200;
+          setTimeout(() => card.classList.toggle("flipped"), flipAt);
+          setTimeout(() => card.classList.add("flipped"), fallDur + 50);
+        });
+
+        index = (index + 7) % cards.length;
+        setTimeout(showNextBatch, batchInt);
+      }
+
+      showNextBatch();
+    }
+
+    loadAll();
+  </script>
+</body>
+</html>

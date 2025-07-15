@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pokémon Trade Overlay</title>
+  <style>
+    body {
+      margin: 0;
+      background: transparent;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+      opacity: 0;
+      animation: fadeIn 1.2s ease-in-out forwards;
+    }
+
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    .trainer-box {
+      position: absolute;
+      top: 2vh;
+      width: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #trainerA-box { left: 3vw; }
+    #trainerB-box { right: 3vw; }
+
+    .trainer-img {
+      width: 140px;
+      border-radius: 8px;
+    }
+
+    .username {
+      color: #fff;
+      margin-top: 8px;
+      font-weight: bold;
+      text-shadow: 0 0 5px #000;
+      font-size: 1.1em;
+    }
+
+    .card-wrapper {
+      width: 180px;
+      height: 250px;
+      perspective: 1000px;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+    }
+
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 1.2s ease-in-out;
+    }
+
+    .card-front, .card-back {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      backface-visibility: hidden;
+      border-radius: 8px;
+      box-shadow: 0 0 20px 5px rgba(255,255,255,0.4);
+    }
+
+    .card-front { transform: rotateY(180deg); }
+
+    .cardA-wrapper { left: 5%; transition: left 5s ease-in-out; }
+    .cardB-wrapper { right: 5%; transition: right 5s ease-in-out; }
+
+    .slide-center-A { left: 41% !important; }
+    .slide-center-B { right: 41% !important; }
+
+    .slide-back-A { left: 75% !important; }
+    .slide-back-B { right: 75% !important; }
+
+    .flipped { transform: rotateY(180deg); }
+
+    .grow {
+      animation: growCard 2s ease-in-out forwards;
+    }
+
+    @keyframes growCard {
+      from { transform: translateY(-50%) scale(1); }
+      to   { transform: translateY(-50%) scale(1.15); }
+    }
+
+    .flash {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .flash-active {
+      animation: flashBang 0.3s ease-in-out forwards;
+    }
+
+    @keyframes flashBang {
+      0% { opacity: 0; }
+      50% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    .burst {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 500px;
+      height: 500px;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .burst.pop {
+      animation: burstPop 2.5s ease-in-out forwards;
+    }
+
+    @keyframes burstPop {
+      0%   { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+      10%  { transform: translate(-50%, -50%) scale(2); opacity: 1; }
+      80%  { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+      100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    }
+
+    .banner {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 3em;
+      font-weight: bold;
+      color: #fff;
+      opacity: 0;
+      text-shadow: 0 0 10px #000, 0 0 20px #f0f, 0 0 40px #0ff;
+      z-index: 6;
+    }
+
+    .banner.show {
+      animation: fadeInOut 3s ease-in-out forwards;
+    }
+
+    .banner.grow {
+      animation: growBanner 2s ease-in-out forwards;
+    }
+
+    @keyframes fadeInOut {
+      0%   { opacity: 0; }
+      20%  { opacity: 1; }
+      80%  { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    @keyframes growBanner {
+      from { transform: translate(-50%, -50%) scale(1); }
+      to   { transform: translate(-50%, -50%) scale(1.2); }
+    }
+
+    .fadeout * {
+      animation: finalFade 2s ease-in-out forwards;
+    }
+
+    @keyframes finalFade {
+      to { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Trainers -->
+  <div class="trainer-box" id="trainerA-box">
+    <img src="trainer1.png" class="trainer-img" />
+    <div class="username" id="nameA">Trainer A</div>
+  </div>
+
+  <div class="trainer-box" id="trainerB-box">
+    <img src="trainer2.png" class="trainer-img" />
+    <div class="username" id="nameB">Trainer B</div>
+  </div>
+
+  <!-- Cards -->
+  <div class="card-wrapper cardA-wrapper" id="wrapperA">
+    <div class="card-inner" id="innerA">
+      <img class="card-front" id="cardA-front" />
+      <img class="card-back" src="background.jpg" />
+    </div>
+  </div>
+
+  <div class="card-wrapper cardB-wrapper" id="wrapperB">
+    <div class="card-inner" id="innerB">
+      <img class="card-front" id="cardB-front" />
+      <img class="card-back" src="background.jpg" />
+    </div>
+  </div>
+
+  <!-- Flash, Burst, Banner -->
+  <div id="flash" class="flash"></div>
+  <img id="burst" class="burst" src="starburst.gif" />
+  <div id="banner" class="banner">TRADE COMPLETE!</div>
+
+  <script>
+    window.onload = () => {
+      fetch("trade.txt")
+        .then(res => res.text())
+        .then(txt => {
+          const [userA, userB, cardAFile, cardBFile] = txt.trim().split("\n");
+
+          document.getElementById("nameA").textContent = userA;
+          document.getElementById("nameB").textContent = userB;
+          document.getElementById("cardA-front").src = cardAFile.trim();
+          document.getElementById("cardB-front").src = cardBFile.trim();
+
+          // 1. Slide cards to center
+          setTimeout(() => {
+            document.getElementById("wrapperA").classList.add("slide-center-A");
+            document.getElementById("wrapperB").classList.add("slide-center-B");
+          }, 1500);
+
+          // 2. Flip to reveal fronts
+          setTimeout(() => {
+            document.getElementById("innerA").classList.add("flipped");
+            document.getElementById("innerB").classList.add("flipped");
+          }, 4000);
+
+          // 3. Flash and burst pop
+          setTimeout(() => {
+            document.getElementById("flash").classList.add("flash-active");
+            document.getElementById("burst").classList.add("pop");
+          }, 5500);
+
+          // 4. Slide cards out to opposite sides
+          setTimeout(() => {
+            document.getElementById("wrapperA").classList.remove("slide-center-A");
+            document.getElementById("wrapperA").classList.add("slide-back-A");
+            document.getElementById("wrapperB").classList.remove("slide-center-B");
+            document.getElementById("wrapperB").classList.add("slide-back-B");
+          }, 6000);
+
+          // 5. Show banner
+          setTimeout(() => {
+            document.getElementById("banner").classList.add("show");
+          }, 7000);
+
+          // 6. Grow cards + banner
+          setTimeout(() => {
+            document.getElementById("wrapperA").classList.add("grow");
+            document.getElementById("wrapperB").classList.add("grow");
+            document.getElementById("banner").classList.add("grow");
+          }, 9000);
+
+          // 7. Fade out everything
+          setTimeout(() => {
+            document.body.classList.add("fadeout");
+          }, 11500);
+        });
+    };
+  </script>
+</body>
+</html>
